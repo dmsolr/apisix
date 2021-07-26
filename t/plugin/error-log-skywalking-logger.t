@@ -139,7 +139,10 @@ plugins:
             local code, body = t('/apisix/admin/plugin_metadata/error-log-logger',
                 ngx.HTTP_PUT,
                 [[{
-                    "port": 1999,
+                    "type": "SKYWALKING",
+                    "skywalking": {
+                        "endpoint_addr": "/log"
+                    },
                     "inactive_timeout": 1
                 }]]
                 )
@@ -152,7 +155,7 @@ plugins:
     }
 --- request
 GET /tg
---- error_code: 201
+--- error_code: 400
 --- response_body
 --- error_log eval
 qr/please set the correct plugin_metadata for error-log-logger/

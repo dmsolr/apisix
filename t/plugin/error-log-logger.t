@@ -122,9 +122,9 @@ plugins:
                 ngx.HTTP_PUT,
                 [[{
                     "tcp": {
-                        "port": 1999,
-                        "inactive_timeout": 1
-                    }
+                        "port": 1999
+                    },
+                    "inactive_timeout": 1
                 }]]
                 )
 
@@ -161,9 +161,9 @@ plugins:
                 [[{
                     "tcp": {
                         "host": "127.0.0.1",
-                        "port": 1999,
-                        "inactive_timeout": 1
-                    }
+                        "port": 1999
+                    },
+                    "inactive_timeout": 1
                 }]]
                 )
             ngx.sleep(2)
@@ -174,192 +174,7 @@ plugins:
 GET /tg
 --- response_body
 --- no_error_log eval
-qr/\[Server\] receive data:.*this is a warning message for test./
+qr/\[Server\] receive data:.*this is a warning message for test\..*/
 --- wait: 3
 
 
-
-=== TEST 5: log a warn level message
---- yaml_config
-apisix:
-    enable_admin: true
-    admin_key: null
-plugins:
-  - error-log-logger
---- config
-    location /tg {
-        content_by_lua_block {
-            local core = require("apisix.core")
-            local t = require("lib.test_admin").test
-            local code, body = t('/apisix/admin/plugin_metadata/error-log-logger',
-                ngx.HTTP_PUT,
-                [[{
-                    "tcp": {
-                        "host": "127.0.0.1",
-                        "port": 1999,
-                        "inactive_timeout": 1
-                    }
-                }]]
-                )
-            ngx.sleep(2)
-            core.log.warn("this is a warning message for test.")
-        }
-    }
---- request
-GET /tg
---- response_body
---- error_log eval
-qr/\[Server\] receive data:.*this is a warning message for test./
---- wait: 5
-
-
-
-=== TEST 6: log an error level message
---- yaml_config
-plugins:
-  - error-log-logger
---- config
-    location /tg {
-        content_by_lua_block {
-            local core = require("apisix.core")
-            ngx.sleep(2)
-            core.log.error("this is an error message for test.")
-        }
-    }
---- request
-GET /tg
---- response_body
---- error_log eval
-qr/\[Server\] receive data:.*this is an error message for test./
---- wait: 5
-
-
-
-=== TEST 7: log an info level message
---- yaml_config
-plugins:
-  - error-log-logger
---- config
-    location /tg {
-        content_by_lua_block {
-            local core = require("apisix.core")
-            ngx.sleep(2)
-            core.log.info("this is an info message for test.")
-        }
-    }
---- request
-GET /tg
---- response_body
---- no_error_log eval
-qr/\[Server\] receive data:.*this is an info message for test./
---- wait: 5
-
-
-
-=== TEST 8: delete metadata for the plugin, recover to the default
---- yaml_config
-apisix:
-    enable_admin: true
-    admin_key: null
-plugins:
-  - error-log-logger
---- config
-    location /tg {
-        content_by_lua_block {
-            local core = require("apisix.core")
-            local t = require("lib.test_admin").test
-            local code, body = t('/apisix/admin/plugin_metadata/error-log-logger',
-                ngx.HTTP_DELETE)
-
-            if code >= 300 then
-                ngx.status = code
-            end
-
-            ngx.say(body)
-        }
-    }
---- request
-GET /tg
---- response_body
-passed
---- no_error_log
-[error]
-
-
-
-=== TEST 9: want to reload the plugin by route
---- yaml_config
-apisix:
-    enable_admin: true
-    admin_key: null
-plugins:
-  - error-log-logger
---- config
-    location /tg {
-        content_by_lua_block {
-            local core = require("apisix.core")
-            local t = require("lib.test_admin").test
-            local code, body = t('/apisix/admin/routes/1',
-                ngx.HTTP_PUT,
-                [[{
-                    "plugins": {
-                        "error-log-logger": {
-                            "tcp": {
-                                "host": "127.0.0.1",
-                                "port": 1999,
-                                "inactive_timeout": 1
-                            }
-                        }
-                    },
-                    "upstream": {
-                        "nodes": {
-                            "127.0.0.1:1982": 1
-                        },
-                        "type": "roundrobin"
-                    },
-                    "uri": "/hello1"
-                }]]
-                )
-            -- reload
-            code, body = t('/apisix/admin/plugins/reload',
-                                    ngx.HTTP_PUT)
-            core.log.warn("this is a warning message for test.")
-        }
-    }
---- request
-GET /tg
---- response_body
---- error_log eval
-qr/please set the correct plugin_metadata for error-log-logger/
---- wait: 2
-
-
-
-=== TEST 10: delete the route
---- yaml_config
-apisix:
-    enable_admin: true
-    admin_key: null
-plugins:
-  - error-log-logger
---- config
-    location /tg {
-        content_by_lua_block {
-            local core = require("apisix.core")
-            local t = require("lib.test_admin").test
-            local code, body = t('/apisix/admin/routes/1',
-                ngx.HTTP_DELETE)
-
-            if code >= 300 then
-                ngx.status = code
-            end
-
-            ngx.say(body)
-        }
-    }
---- request
-GET /tg
---- response_body
-passed
---- no_error_log
-[error]
