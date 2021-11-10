@@ -41,7 +41,7 @@ local schema = {
         service_name = {type = "string", default = "APISIX"},
         service_instance_name = {type = "string", default = "APISIX Instance Name"},
         timeout = {type = "integer", minimum = 1, default = 3},
-        name = {type = "string", default = "skywalking-logger"},
+        name = {type = "string", default = "skywalking logger"},
         max_retry_count = {type = "integer", minimum = 0, default = 0},
         retry_delay = {type = "integer", minimum = 0, default = 1},
         buffer_duration = {type = "integer", minimum = 1, default = 60},
@@ -228,4 +228,3 @@ end
 
 
 return _M
-
